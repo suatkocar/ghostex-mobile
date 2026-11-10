@@ -25,9 +25,12 @@ of `plugins/withWidgets.js` together with the Live Activity.
 - Text level: event and session only. Leading name, project, state and times; no prompt or reply. The leading name
   ("name" in the table above) is the session's name as the Sessions list shows it while Settings › Live Activity ›
   "Show session names" is on (`liveActivitySessionNames`, on by default) and the session has one, else the agent's
-  name; the mark tells the agent either way. The Live Activity's rows follow the same switch and rule (`leadingName`
+  name; the mark tells the agent either way. The Live Activity's rows follow the same switch and rule (`rowNames`
   in `src/notifications/contentState.ts`). The snapshot carries that name in `agentName`, the key the widgets draw
-  first, so the format version stays 2 and the widgets need no new build.
+  first, so the format version stays 2 and widgets from before the names draw it too. Where the session's name
+  leads, the optional `agentLabel` carries the agent's name and VoiceOver reads it for the mark; a widget from
+  before that key ignores it. In the large widget a project that does not fit after the name is cut, and not drawn
+  when less than about five characters of it would be left.
 - No data written yet (or a snapshot of another version, or one with an agent neither working nor waiting): the
   Ghostex mark only, no numbers.
 - Colour never carries meaning alone: every state colour comes with its glyph (open arc working, clock waiting, bell

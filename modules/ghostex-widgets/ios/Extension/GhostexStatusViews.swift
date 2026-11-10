@@ -7,6 +7,8 @@ import WidgetKit
 // bars where there are any, and the data time. Every state colour comes with its glyph and word, so meaning survives
 // the tinted Home Screen and StandBy at night, where colours go. The Live Activity's glyphs, agent marks and Ghostex
 // mark are reused; the light appearance draws the states in the darker tones the app uses on light surfaces.
+// An agent's name is its leading name: the agent's own, or its session's where the app shows session names; the mark
+// then tells the agent, and VoiceOver reads the agent's name for it.
 
 struct WidgetColors {
   let background: Color
@@ -238,7 +240,7 @@ struct MediumStatus: View {
           ForEach(Array(snapshot.agents.prefix(shownAgents).enumerated()), id: \.offset) { _, agent in
             VStack(alignment: .leading, spacing: 2) {
               HStack(spacing: 6) {
-                AgentMarkView(iconId: agent.agentIcon, tint: agent.agentTint)
+                AgentMarkView(iconId: agent.agentIcon, tint: agent.agentTint, label: agent.agentLabel)
                 Text(agent.agentName).font(.footnote.weight(.semibold))
               }
               HStack(spacing: 6) {
@@ -285,11 +287,11 @@ struct LargeAgentRow: View {
 
   var body: some View {
     HStack(spacing: 8) {
-      AgentMarkView(iconId: agent.agentIcon, tint: agent.agentTint)
-      HStack(alignment: .firstTextBaseline, spacing: 6) {
-        Text(agent.agentName).font(.footnote.weight(.semibold)).layoutPriority(1)
-        Text(agent.project).font(.caption).foregroundStyle(colors.secondary)
-      }
+      AgentMarkView(iconId: agent.agentIcon, tint: agent.agentTint, label: agent.agentLabel)
+      NameAndProject(
+        name: Text(agent.agentName).font(.footnote.weight(.semibold)),
+        project: Text(agent.project).font(.caption).foregroundColor(colors.secondary)
+      )
       .frame(maxWidth: .infinity, alignment: .leading)
       StateLabel(state: agent.state, colors: colors).font(.caption)
       Text("since \(Text(agent.sinceAt, style: .time))")

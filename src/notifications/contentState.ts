@@ -2,7 +2,7 @@
  * The Live Activity's content state, built from the mobile summaries the app already polls, never from the
  * notification feed. A row carries its leading name, the agent's artwork, the project, the state, when that state
  * began and the session's identifiers; no prompt or reply text. The leading name is the agent's, or the session's
- * name where Settings › Live Activity › "Show session names" is on and the session has one (`leadingName`).
+ * name where Settings › Live Activity › "Show session names" is on and the session has one (`rowNames`).
  *
  * Which host data a row needs: `startedAt` of a working row is the top-level `workingStartedAt`, which means only the
  * current run; of a waiting row `attention.enteredAt`; of a finished row `attention.workingStartedAt`, when the stint
@@ -39,11 +39,16 @@ export type LiveActivityTarget = { machineId: string; sessionId: string };
 export type LiveActivityRow = {
   target: LiveActivityTarget;
   /**
-   * The name the row leads with (`leadingName`): the agent's, or the session's where session names are shown.
+   * The name the row leads with (`rowNames`): the agent's, or the session's where session names are shown.
    *
    * CDXC:Notifications 2026-11-10 WHY: The session's name travels in this key instead of one of its own. The widget extension draws `agentName` as a row's leading text and tells the agent by `agentIcon`, and it is native code: a new key would be drawn only by a new app build, while this key reaches the apps already installed with an over-the-air update.
    */
   agentName: string;
+  /**
+   * The agent's name, only on a row that leads with its session's name: there the mark alone tells the agent, and
+   * the extension gives the mark this name for VoiceOver. An extension from before the key ignores it.
+   */
+  agentLabel?: string;
   /** Artwork identity resolved exactly as the session row, including an explicit icon and the cloud artwork. */
   agentIcon: AgentArtId;
   /** RGB tint from the app's registry, packed as 0xRRGGBB for the native view. */
@@ -236,11 +241,15 @@ export function compareShown(a: Shown, b: Shown): number {
 }
 
 /**
- * The name a row leads with: the session's name where session names are shown and the session has one, else its
- * agent's name, as before the names. The Live Activity's rows and the widgets' agents both take it from here.
+ * The names a row is sent with. `agentName` is the name it leads with: the session's name where session names are
+ * shown and the session has one, else its agent's name, as before the names. Only where the session's name leads,
+ * `agentLabel` carries the agent's name. The Live Activity's rows and the widgets' agents both take them from here.
  */
-export function leadingName(shown: Shown, showSessionNames: boolean): string {
-  return showSessionNames && shown.sessionName.length > 0 ? shown.sessionName : shown.row.agentName;
+export function rowNames(shown: Shown, showSessionNames: boolean): Pick<LiveActivityRow, 'agentName' | 'agentLabel'> {
+  const agentName = shown.row.agentName;
+  return showSessionNames && shown.sessionName.length > 0 && shown.sessionName !== agentName
+    ? { agentName: shown.sessionName, agentLabel: agentName }
+    : { agentName };
 }
 
 /**
@@ -288,7 +297,7 @@ export function buildContentState(
     .flatMap((candidate) => (candidate.shown === null ? [] : [candidate.shown]))
     .sort(compareShown)
     .slice(0, MAX_ACTIVITY_ROWS)
-    .map((shown): LiveActivityRow => ({ ...shown.row, agentName: leadingName(shown, showSessionNames) }));
+    .map((shown): LiveActivityRow => ({ ...shown.row, ...rowNames(shown, showSessionNames) }));
   return {
     updatedAt: new Date(dataTime ?? now).toISOString(),
     counts,

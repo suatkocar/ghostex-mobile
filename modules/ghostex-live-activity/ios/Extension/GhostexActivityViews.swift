@@ -9,7 +9,8 @@ import WidgetKit
 
 // The design: state colours of the session list (orange works, blue
 // waits, pink asks, muted finished), always with a glyph and a word so colour never carries meaning alone;
-// rows of the agent's mark, agent + project; four rows within Apple's 160 pt Lock Screen height.
+// rows of the agent's mark, the leading name (the agent's, or the session's where the app shows session names) +
+// project; four rows within Apple's 160 pt Lock Screen height.
 
 enum ActivityStyle {
   static let working = Color(red: 0xC6 / 255, green: 0x8A / 255, blue: 0x06 / 255)
@@ -148,6 +149,45 @@ struct ElapsedText: View {
   }
 }
 
+/// A row's leading name and, after it in muted text, its project, on one line. The name comes first: it is drawn
+/// whole while it fits and cut with an ellipsis when it is longer than the line. The project takes the room the
+/// name leaves: whole when it fits, cut when at least `minimumProjectWidth` is left, and not drawn at all below
+/// that, so a long session name leaves no lone "…" where the project was. VoiceOver reads both, whatever is drawn.
+struct NameAndProject: View {
+  /// The leading name and the project, already in their fonts and colours.
+  let name: Text
+  let project: Text
+
+  /// The least room a cut project is worth: about five characters and the ellipsis at footnote size.
+  static let minimumProjectWidth: CGFloat = 44
+
+  var body: some View {
+    ViewThatFits(in: .horizontal) {
+      line(project.fixedSize())
+      // A fixed ideal width makes this line fit exactly when the name leaves the project its least room; the
+      // project then takes all the name leaves.
+      line(
+        project.frame(
+          minWidth: Self.minimumProjectWidth, idealWidth: Self.minimumProjectWidth, maxWidth: .infinity,
+          alignment: .leading))
+      name
+    }
+    .lineLimit(1)
+    .accessibilityRepresentation {
+      name
+      project
+    }
+  }
+
+  /// The whole name, then the project as `sizedProject` lays it out.
+  private func line(_ sizedProject: some View) -> some View {
+    HStack(alignment: .firstTextBaseline, spacing: 6) {
+      name.fixedSize()
+      sizedProject
+    }
+  }
+}
+
 struct ActivityRowView: View {
   let row: GhostexActivityRow
   let frozenAt: Date?
@@ -155,17 +195,15 @@ struct ActivityRowView: View {
   var body: some View {
     let status = ActivityStatus(row)
     HStack(spacing: 8) {
-      AgentMarkView(iconId: row.agentIcon, tint: row.agentTint)
-      HStack(alignment: .firstTextBaseline, spacing: 6) {
-        Text(row.agentName)
+      AgentMarkView(iconId: row.agentIcon, tint: row.agentTint, label: row.agentLabel)
+      NameAndProject(
+        name: Text(row.agentName)
           .font(.subheadline.weight(.semibold))
-          .foregroundStyle(row.state == .finished ? ActivityStyle.secondaryText : ActivityStyle.text)
-          .layoutPriority(1)
-        Text(row.project)
+          .foregroundColor(row.state == .finished ? ActivityStyle.secondaryText : ActivityStyle.text),
+        project: Text(row.project)
           .font(.footnote)
-          .foregroundStyle(ActivityStyle.secondaryText)
-      }
-      .lineLimit(1)
+          .foregroundColor(ActivityStyle.secondaryText)
+      )
       .frame(maxWidth: .infinity, alignment: .leading)
       HStack(spacing: 4) {
         StatusGlyph(status: status, size: 12)

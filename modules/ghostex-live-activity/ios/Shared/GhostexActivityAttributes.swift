@@ -5,8 +5,9 @@ import Foundation
 /// module that starts and updates the activity) and into the widget extension (the views); ActivityKit matches
 /// the two by this type.
 ///
-/// The content state carries per row the agent, the project, the state, when that state began and the session's
-/// identifiers, and no prompt, reply or title text.
+/// The content state carries per row its leading name, the agent's artwork, the project, the state, when that state
+/// began and the session's identifiers, and no prompt or reply text. The leading name is the agent's, or the
+/// session's name where the app's "Show session names" switch is on and the session has one.
 /// The app builds it in `src/notifications/contentState.ts`; this side decodes it, fits it into ActivityKit's
 /// 4 KB and renders it.
 public struct GhostexActivityAttributes: ActivityAttributes {
@@ -58,7 +59,12 @@ public enum GhostexAgentState: String, Codable, Hashable, Sendable {
 
 public struct GhostexActivityRow: Codable, Hashable, Sendable {
   public var target: GhostexActivityTarget
+  /// The name the row leads with: the agent's, or the session's where session names are shown. The key kept its
+  /// name when the session's name joined it, so the apps already installed draw it without a new build.
   public var agentName: String
+  /// The agent's name, only on a row that leads with its session's name: there the mark alone tells the agent, and
+  /// VoiceOver reads this for it. Absent on a row that leads with the agent's name, and from an app that sends none.
+  public var agentLabel: String?
   /// Resolved artwork identity and RGB tint from the app's registry; never resolved from the display name here.
   public var agentIcon: String
   public var agentTint: UInt32
@@ -76,10 +82,12 @@ public struct GhostexActivityRow: Codable, Hashable, Sendable {
   public init(
     target: GhostexActivityTarget, agentName: String, agentIcon: String, agentTint: UInt32,
     project: String, state: GhostexAgentState,
-    startedAt: Date, finishedAt: Date? = nil, expiresAt: Date? = nil, hasQuestion: Bool? = nil
+    startedAt: Date, finishedAt: Date? = nil, expiresAt: Date? = nil, hasQuestion: Bool? = nil,
+    agentLabel: String? = nil
   ) {
     self.target = target
     self.agentName = agentName
+    self.agentLabel = agentLabel
     self.agentIcon = agentIcon
     self.agentTint = agentTint
     self.project = project
@@ -91,13 +99,15 @@ public struct GhostexActivityRow: Codable, Hashable, Sendable {
   }
 
   private enum CodingKeys: String, CodingKey {
-    case target, agentName, agentIcon, agentTint, project, state, startedAt, finishedAt, expiresAt, hasQuestion
+    case target, agentName, agentLabel, agentIcon, agentTint, project, state, startedAt, finishedAt, expiresAt
+    case hasQuestion
   }
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     target = try container.decode(GhostexActivityTarget.self, forKey: .target)
     agentName = try container.decode(String.self, forKey: .agentName)
+    agentLabel = try container.decodeIfPresent(String.self, forKey: .agentLabel)
     agentIcon = try container.decode(String.self, forKey: .agentIcon)
     agentTint = try container.decode(UInt32.self, forKey: .agentTint)
     project = try container.decode(String.self, forKey: .project)
@@ -112,6 +122,7 @@ public struct GhostexActivityRow: Codable, Hashable, Sendable {
     var container = encoder.container(keyedBy: CodingKeys.self)
     try container.encode(target, forKey: .target)
     try container.encode(agentName, forKey: .agentName)
+    try container.encodeIfPresent(agentLabel, forKey: .agentLabel)
     try container.encode(agentIcon, forKey: .agentIcon)
     try container.encode(agentTint, forKey: .agentTint)
     try container.encode(project, forKey: .project)

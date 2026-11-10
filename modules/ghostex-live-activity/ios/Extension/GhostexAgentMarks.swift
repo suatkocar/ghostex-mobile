@@ -17,10 +17,13 @@ import SwiftUI
 /// extension reuses the app's existing marks for the same purpose, telling which agent a row is, as in the session
 /// list, and adds no new asset source. The marks of third-party agents belong to their makers; no licence for them
 /// is recorded here.
-/// 18 pt, the size of the mark in the design's row. Decorative: the row's text names the agent.
+/// 18 pt, the size of the mark in the design's row. Decorative where the row's text names the agent; on a row that
+/// leads with its session's name the mark alone tells the agent, so VoiceOver reads `label`, the agent's name.
 struct AgentMarkView: View {
   let iconId: String
   let tint: UInt32
+  /// The agent's name for VoiceOver; nil where the row's text already names the agent.
+  var label: String? = nil
 
   var body: some View {
     Image("AgentMark-\(iconId)")
@@ -31,6 +34,7 @@ struct AgentMarkView: View {
         green: Double((tint >> 8) & 0xFF) / 255,
         blue: Double(tint & 0xFF) / 255))
       .frame(width: 18, height: 18)
-      .accessibilityHidden(true)
+      .accessibilityLabel(Text(label ?? ""))
+      .accessibilityHidden(label == nil)
   }
 }
