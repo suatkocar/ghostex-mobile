@@ -29,8 +29,10 @@ of `plugins/withWidgets.js` together with the Live Activity.
   in `src/notifications/contentState.ts`). The snapshot carries that name in `agentName`, the key the widgets draw
   first, so the format version stays 2 and widgets from before the names draw it too. Where the session's name
   leads, the optional `agentLabel` carries the agent's name and VoiceOver reads it for the mark; a widget from
-  before that key ignores it. In the large widget a project that does not fit after the name is cut, and not drawn
-  when less than about five characters of it would be left.
+  before that key ignores it. In the large widget, on a row with `agentLabel` (one that leads with its session's
+  name), a project that does not fit after the name is cut, and not drawn when less than about five characters of
+  it would be left. A row without the key (names switched off, a session without a name, an app that does not
+  send the key) is laid out as before session names: the project is cut into whatever the name leaves.
 - No data written yet (or a snapshot of another version, or one with an agent neither working nor waiting): the
   Ghostex mark only, no numbers.
 - Colour never carries meaning alone: every state colour comes with its glyph (open arc working, clock waiting, bell

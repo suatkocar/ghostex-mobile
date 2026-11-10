@@ -64,6 +64,8 @@ public struct GhostexActivityRow: Codable, Hashable, Sendable {
   public var agentName: String
   /// The agent's name, only on a row that leads with its session's name: there the mark alone tells the agent, and
   /// VoiceOver reads this for it. Absent on a row that leads with the agent's name, and from an app that sends none.
+  /// Its presence is also how the views know that a session's name leads: only such a row lets its project give way
+  /// to the name (`NameAndProject`); every other row is laid out as before session names.
   public var agentLabel: String?
   /// Resolved artwork identity and RGB tint from the app's registry; never resolved from the display name here.
   public var agentIcon: String

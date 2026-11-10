@@ -149,33 +149,49 @@ struct ElapsedText: View {
   }
 }
 
-/// A row's leading name and, after it in muted text, its project, on one line. The name comes first: it is drawn
-/// whole while it fits and cut with an ellipsis when it is longer than the line. The project takes the room the
-/// name leaves: whole when it fits, cut when at least `minimumProjectWidth` is left, and not drawn at all below
-/// that, so a long session name leaves no lone "…" where the project was. VoiceOver reads both, whatever is drawn.
+/// A row's leading name and, after it in muted text, its project, on one line.
+///
+/// Where the name is a session's (`sessionNameLeads`), the name comes first: it is drawn whole while it fits and cut
+/// with an ellipsis when it is longer than the line. The project takes the room the name leaves: whole when it fits,
+/// cut when at least `minimumProjectWidth` is left, and not drawn at all below that, so a long session name leaves
+/// no lone "…" where the project was. VoiceOver reads both, whatever is drawn.
+///
+/// Where the name is the agent's, the line is laid out as before session names: the name has priority and the
+/// project is cut into whatever is left, however little. That keeps rows with names switched off, and rows from an
+/// app that sends no `agentLabel`, exactly as they were, also for a long agent name.
 struct NameAndProject: View {
   /// The leading name and the project, already in their fonts and colours.
   let name: Text
   let project: Text
+  /// The row leads with its session's name: it carries `agentLabel`, which the app sends on exactly those rows.
+  let sessionNameLeads: Bool
 
   /// The least room a cut project is worth: about five characters and the ellipsis at footnote size.
   static let minimumProjectWidth: CGFloat = 44
 
   var body: some View {
-    ViewThatFits(in: .horizontal) {
-      line(project.fixedSize())
-      // A fixed ideal width makes this line fit exactly when the name leaves the project its least room; the
-      // project then takes all the name leaves.
-      line(
-        project.frame(
-          minWidth: Self.minimumProjectWidth, idealWidth: Self.minimumProjectWidth, maxWidth: .infinity,
-          alignment: .leading))
-      name
-    }
-    .lineLimit(1)
-    .accessibilityRepresentation {
-      name
-      project
+    if sessionNameLeads {
+      ViewThatFits(in: .horizontal) {
+        line(project.fixedSize())
+        // A fixed ideal width makes this line fit exactly when the name leaves the project its least room; the
+        // project then takes all the name leaves.
+        line(
+          project.frame(
+            minWidth: Self.minimumProjectWidth, idealWidth: Self.minimumProjectWidth, maxWidth: .infinity,
+            alignment: .leading))
+        name
+      }
+      .lineLimit(1)
+      .accessibilityRepresentation {
+        name
+        project
+      }
+    } else {
+      HStack(alignment: .firstTextBaseline, spacing: 6) {
+        name.layoutPriority(1)
+        project
+      }
+      .lineLimit(1)
     }
   }
 
@@ -202,7 +218,8 @@ struct ActivityRowView: View {
           .foregroundColor(row.state == .finished ? ActivityStyle.secondaryText : ActivityStyle.text),
         project: Text(row.project)
           .font(.footnote)
-          .foregroundColor(ActivityStyle.secondaryText)
+          .foregroundColor(ActivityStyle.secondaryText),
+        sessionNameLeads: row.agentLabel != nil
       )
       .frame(maxWidth: .infinity, alignment: .leading)
       HStack(spacing: 4) {

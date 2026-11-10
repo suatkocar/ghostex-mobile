@@ -290,7 +290,8 @@ struct LargeAgentRow: View {
       AgentMarkView(iconId: agent.agentIcon, tint: agent.agentTint, label: agent.agentLabel)
       NameAndProject(
         name: Text(agent.agentName).font(.footnote.weight(.semibold)),
-        project: Text(agent.project).font(.caption).foregroundColor(colors.secondary)
+        project: Text(agent.project).font(.caption).foregroundColor(colors.secondary),
+        sessionNameLeads: agent.agentLabel != nil
       )
       .frame(maxWidth: .infinity, alignment: .leading)
       StateLabel(state: agent.state, colors: colors).font(.caption)

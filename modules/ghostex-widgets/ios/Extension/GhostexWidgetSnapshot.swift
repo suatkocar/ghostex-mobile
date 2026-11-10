@@ -20,7 +20,8 @@ struct GhostexWidgetSnapshot: Decodable, Hashable {
   struct Agent: Decodable, Hashable {
     /// The name the agent's lines lead with: the agent's, or the session's where session names are shown.
     let agentName: String
-    /// The agent's name for VoiceOver, only where the session's name leads (as `GhostexActivityRow.agentLabel`).
+    /// The agent's name for VoiceOver, only where the session's name leads; its presence also selects that row's
+    /// layout (as `GhostexActivityRow.agentLabel`).
     let agentLabel: String?
     /// Resolved artwork identity and packed RGB tint from the app, never inferred from the display name.
     let agentIcon: String

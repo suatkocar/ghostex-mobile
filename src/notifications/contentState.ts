@@ -46,7 +46,9 @@ export type LiveActivityRow = {
   agentName: string;
   /**
    * The agent's name, only on a row that leads with its session's name: there the mark alone tells the agent, and
-   * the extension gives the mark this name for VoiceOver. An extension from before the key ignores it.
+   * the extension gives the mark this name for VoiceOver. Its presence is also how the extension knows that a
+   * session's name leads, and only then lets the project give way to a long name; a row without it is laid out as
+   * before session names. An extension from before the key ignores it.
    */
   agentLabel?: string;
   /** Artwork identity resolved exactly as the session row, including an explicit icon and the cloud artwork. */
